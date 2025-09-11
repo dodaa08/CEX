@@ -1,3 +1,0 @@
-declare const MNUENOMICS = "abandon able about above absent absorb abstract absurd abuse access achieve aisle";
-export default MNUENOMICS;
-//# sourceMappingURL=config.d.ts.map
