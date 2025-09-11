@@ -10,9 +10,16 @@ export const check_balance_update_db = async (address) => {
             cached_balance = balance.toString();
             await redisClient.set(`balance${address}`, cached_balance);
         }
-        await userModel.updateOne({ address }, { $set: { balance: cached_balance } }, //
-        { upsert: true } // insert it to the end
-        );
+        const existingUser = await userModel.findOne({ DepositAddress: address });
+        if (!existingUser) {
+            return;
+        }
+        const oldBalance = existingUser.balance;
+        if (oldBalance.toString() !== cached_balance) {
+            console.log(`Balance changed for ${address}: ${oldBalance} → ${cached_balance}`);
+            await userModel.updateOne({ DepositAddress: address }, { $set: { balance: cached_balance } }, { upsert: true });
+            await redisClient.set(`balance${address}`, cached_balance);
+        }
         return cached_balance;
     }
     catch (error) {

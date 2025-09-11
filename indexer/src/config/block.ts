@@ -1,80 +1,67 @@
-import { JsonRpcProvider, TransactionResponse } from "ethers";
+import { JsonRpcProvider } from "ethers";
+import type { TransactionResponse } from "ethers";
 import { getLastProcessedblock, setLastProcessedBlock } from "../services/bloclService.js";
 import { check_balance_update_db } from "../services/Updatedb.js";
 
 const provider = new JsonRpcProvider(process.env.ETH_RPC_URL);
 
-// get the txn details addresses and values being traded on the interested addresses
 export const processBlock = async (blockNumber: number, addresses: string[]) => {
   try {
-    const block = await provider.getBlock(blockNumber, true); // only hashes
+    const block = await provider.getBlock(blockNumber, true);
     if (!block || !block.transactions) return;
-    
-    
-    const updatedUsers = new Map<string, string>(); // data structure, for storing key value pairs ?
 
-    
-    for (const txHash of block.transactions) {
-      const tx: TransactionResponse | null = await provider.getTransaction(txHash);
+    for (const tx of block.transactions as unknown as TransactionResponse[]) {
       if (!tx) continue;
 
-      // console.log(tx.hash);
-      const from = tx.from?.toLowerCase()??"";
-      const to = tx.to?.toLowerCase()??"";
+      const from = tx.from?.toLowerCase() ?? "";
+      const to = tx.to?.toLowerCase() ?? "";
 
       if (addresses.includes(from) || addresses.includes(to)) {
         console.log(
           `Relevant tx in block ${blockNumber}: ${tx.hash}, from ${from}, to ${to}, value: ${tx.value.toString()}`
         );
 
-        let updated_balance : any;
-
-        // step 6: checkBalanceAndUpdate(address)
-        for(const address of [from,to]){
-          if(addresses.includes(address)){
-            updated_balance = await check_balance_update_db(address);            
-            updatedUsers.set(address, updated_balance);
+        for (const address of [from, to]) {
+          if (addresses.includes(address)) {
+            await check_balance_update_db(address);
           }
         }
-
-        console.log("Users up to data with the current block txns")
       }
     }
-    return Array.from(updatedUsers, ([address, updated_balance]) => ({address, updated_balance}));
   } catch (error) {
     console.error(error, `Error processing block no: ${blockNumber}`);
   }
 };
 
 
-export const startBlockListener = async (addresses : string[])=>{
-    try{
-        let latestBlock = await getLastProcessedblock();
+export const startBlockListener = async (addresses: string[]) => {
+  try {
+    let latestBlock = await getLastProcessedblock();
 
-        if(latestBlock === null){
-          await setLastProcessedBlock(await provider.getBlockNumber());
-          latestBlock = await getLastProcessedblock();
-          console.log("Latest block updated to", latestBlock);
+    if (latestBlock === null) {
+      await setLastProcessedBlock(await provider.getBlockNumber());
+      latestBlock = await getLastProcessedblock();
+      console.log("Latest block updated to", latestBlock);
+    }
+
+    provider.on("block", async (blockNumber) => {
+      if (latestBlock !== null) {
+        if (blockNumber <= latestBlock) return;
+        
+        const blocksBehind = blockNumber - latestBlock;
+        console.log(`Processing ${blocksBehind} blocks behind (${latestBlock + 1} → ${blockNumber})`);
+        
+        for (let b = latestBlock + 1; b <= blockNumber; b++) {
+          await processBlock(b, addresses);
+          await setLastProcessedBlock(b);
+          console.log(`Saved checkpoint for block ${b}`);
         }
-
-        provider.on("block", async (blockNumber)=>{
-            if(latestBlock!==null){
-                if(blockNumber<=latestBlock) return;
-                
-                for(let b = latestBlock + 1; b<=blockNumber; b++){
-                    await processBlock(b, addresses);
-                    await setLastProcessedBlock(b);
-                    console.log("Saved checkpoint..");
-                }
-                
-                latestBlock = blockNumber;
-                console.log("Latest block updated to", latestBlock);
-            }
-        })
-
-    }
-    catch(error){
-        console.error(error);
-    }
-}
+        
+        latestBlock = blockNumber;
+      }
+    });
+  } catch (error) {
+    console.error(error);
+  }
+};
 
