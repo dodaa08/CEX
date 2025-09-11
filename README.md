@@ -1,4 +1,4 @@
-## Minimal CEX-like Deposits, Indexing, and API 
+## Minimal CEX-like Deposits, Indexing, and API 🚀
 
 A small, focused project that issues per-user deposit addresses, indexes on-chain activity, and exposes simple APIs your frontend can use to behave like a lightweight CEX.
 
@@ -52,14 +52,14 @@ A small, focused project that issues per-user deposit addresses, indexes on-chai
 
 ### Key modules (Indexer)
 - `src/config/block.ts`
-  - `processBlock(blockNumber, addresses)` – process a single block; update balances for matching txs.
-  - `startBlockListener(addresses)` – subscribe to new blocks, process sequentially, save checkpoints.
+  - `processBlock(blockNumber, addresses)` – fetch block with full transactions (1 RPC), filter for relevant addresses, update balances.
+  - `startBlockListener(addresses)` – subscribe to new blocks, process sequentially with catch-up logging, save checkpoints.
 - `src/services/addresses.ts`
-  - `LoadInteresetdAddresses()` – load deposit addresses from Mongo; cache in Redis under `interested_addresses`.
-- `src/services/bloclService.ts` (typo kept to match file on disk)
+  - `LoadInteresetdAddresses()` – load deposit addresses from Mongo, normalize to lowercase, cache in Redis.
+- `src/services/bloclService.ts`
   - `getLastProcessedblock()` / `setLastProcessedBlock(n)` – checkpoint helpers stored in Redis.
 - `src/services/Updatedb.ts`
-  - `check_balance_update_db(address)` – get on-chain balance and upsert into Mongo for that user.
+  - `check_balance_update_db(address)` – get on-chain balance, compare with DB, update if changed, cache in Redis.
 
 ---
 
@@ -68,7 +68,7 @@ A small, focused project that issues per-user deposit addresses, indexes on-chai
   - Creates a new user: derives a unique deposit address (HD path), stores `email`, `DepositAddress`, `userId`, `privateKey`, and initial `balance`.
   - Invalidates Redis key `interested_addresses` so the indexer reloads the new address.
 - `GET /api/getAddress`
-  - Returns the user’s deposit address (implementation lives under `routes/DepositAddress`).
+  - Returns the user's deposit address (implementation lives under `routes/DepositAddress`).
 - `GET /health`
   - Liveness endpoint.
 
@@ -106,25 +106,27 @@ npm run dev
 
 ---
 
-## Frontend plan (like a CEX, but minimal) 🔐
-- After signup/login, show the user’s on-chain deposit address.
-- Poll or subscribe to `GET /api/getAddress` and a `GET /api/balance` endpoint (can be added) to show updated balances.
-- When user sends funds to the deposit address on-chain, the indexer detects it and updates Mongo; the FE reflects balance changes within a block or two.
-- For withdrawals or internal transfers, extend BE with proper auth, signing policies, and on-chain send flows.
+## Frontend (Next.js) 🔐
+- **Next.js 14** with TypeScript and Tailwind CSS
+- **Authentication**: Signup/login with email/password
+- **Dashboard**: Show user's deposit address and current balance
+- **Real-time updates**: Poll BE APIs to reflect balance changes detected by indexer
+- **Transaction history**: Display relevant transactions for user's addresses
+- **Withdrawal flow**: Send funds from deposit address (requires private key management)
+
+### Key features
+- After signup/login, show the user's on-chain deposit address
+- Poll `GET /api/getAddress` and `GET /api/balance` to show updated balances
+- When user sends funds to deposit address, indexer detects it and updates Mongo; FE reflects changes within a block or two
+- For withdrawals, extend BE with proper auth, signing policies, and on-chain send flows
 
 ---
 
-## Notes & Tips
-- If your RPC is rate-limited, initialize the checkpoint at chain head to avoid heavy backfills.
-- Normalize all addresses to lowercase for comparisons.
-- Prefer `getBlock(number, true)` (ethers v6) to fetch full txs in one RPC.
-- Keep Redis checkpoints without TTL; they’re your resume bookmarks.
-
----
 
 ## Roadmap (short)
-- Add `GET /api/balance` and `/api/txs` for the FE.
-- Replace any typos (e.g., `bloclService.ts` -> `blockService.ts`) and unify naming.
-- Add input validation, rate limiting, and better logs.
+- Add `GET /api/balance` and `/api/txs` for the FE
+- Rename `bloclService.ts` → `blockService.ts` for consistency
+- Add input validation, rate limiting, and structured logging
+- Implement secure private key management for withdrawals
 
 
