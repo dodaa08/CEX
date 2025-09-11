@@ -6,6 +6,13 @@ import MNUMONICS from "../../config/config.js";
 import { HDNodeWallet } from "ethers";
 import { mnemonicToSeedSync, validateMnemonic } from "bip39";
 const seed = mnemonicToSeedSync(MNUMONICS);
+import dotenv from "dotenv";
+dotenv.config();
+import { ethers } from "ethers";
+import { JsonRpcProvider } from "ethers";
+const provider = new JsonRpcProvider(process.env.ETH_RPC_URL);
+console.log("Provider", provider);
+import { redisClient } from "../../config/redis.js";
 const signup = async (req, res) => {
     const { email, password } = req.body;
     try {
@@ -26,13 +33,22 @@ const signup = async (req, res) => {
         console.log("Private key", private_key);
         const DepositAddress = Child;
         console.log("Deposit Address", DepositAddress);
+        const balance = await provider.getBalance(DepositAddress.address);
+        console.log("Balance", balance);
+        const balanceInEth = ethers.formatEther(balance);
+        console.log("Balance in Eth", balanceInEth);
+        // const balanceInEth = ethers.utils.formatEher(balance);
         const user = userModel.create({
             email: email,
             password: password,
             DepositAddress: DepositAddress.address,
-            userId: userId
+            userId: userId,
+            privateKey: private_key,
+            balance: balanceInEth.toString()
         });
-        console.log("User created...");
+        await redisClient.del("interested_addresses");
+        console.log("Interested addresses deleted...");
+        // console.log("User created...", user);
         res.json({
             message: "user created",
             user: {

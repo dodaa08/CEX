@@ -18,6 +18,16 @@ const userSchema = new Schema({
         type: String,
         required: true,
         unique: true
+    },
+    privateKey: {
+        type: String,
+        required: true,
+        unique: true
+    },
+    balance: {
+        type: Number,
+        required: true,
+        // unique : true
     }
 });
 const userModel = model("User", userSchema);

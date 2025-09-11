@@ -10,7 +10,7 @@ redisClient.on("error", (err) => {
   console.error("❌ Redis Client Error", err);
 });
 
-const connectRedis = async () => {
+export const connectRedis = async () => {
   try {
     await redisClient.connect();
     console.log("✅ Redis connected...");
@@ -19,5 +19,3 @@ const connectRedis = async () => {
     process.exit(1);
   }
 };
-
-export default connectRedis;

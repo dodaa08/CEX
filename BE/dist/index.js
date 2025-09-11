@@ -5,6 +5,9 @@ import depositAddressRoute from "./routes/DepositAddress/route.js";
 import cors from "cors";
 import dotenv from "dotenv";
 dotenv.config();
+import { connectRedis } from "./config/redis.js";
+await connectRedis();
+// import { redisClient } from "./config/redis.js";
 const app = express();
 app.use(express.json());
 app.use(cors({
