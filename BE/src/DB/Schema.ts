@@ -24,6 +24,11 @@ const userSchema = new Schema({
         type : String,
         required : true,
         unique : true
+    },
+    balance : {
+        type : Number,
+        required : true,
+        // unique : true
     }
 });
 

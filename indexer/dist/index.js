@@ -8,7 +8,7 @@ async function main() {
     await connectRedis();
     // Load interested Addresses from db : 
     const addresses = await LoadInteresetdAddresses();
-    console.log("Addresses", addresses);
+    console.log("Interested Addresses from db", addresses);
     // start the indexer :
     await startBlockListener(addresses);
     // Start the indexer  
@@ -101,7 +101,6 @@ startBlockListener() → inside it:
 processBlock(blockNo) → inside it:
 
 checkBalanceAndUpdate(userId, address)
-    
     
     */
 }
