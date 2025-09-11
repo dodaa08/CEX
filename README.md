@@ -1,4 +1,4 @@
-## Minimal CEX-like Deposits, Indexing, and API 🚀
+## Minimal CEX-like Deposits, Indexing, and API 
 
 A small, focused project that issues per-user deposit addresses, indexes on-chain activity, and exposes simple APIs your frontend can use to behave like a lightweight CEX.
 
