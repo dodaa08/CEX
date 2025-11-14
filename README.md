@@ -106,27 +106,3 @@ npm run dev
 
 ---
 
-## Frontend (Next.js) 🔐
-- **Next.js 14** with TypeScript and Tailwind CSS
-- **Authentication**: Signup/login with email/password
-- **Dashboard**: Show user's deposit address and current balance
-- **Real-time updates**: Poll BE APIs to reflect balance changes detected by indexer
-- **Transaction history**: Display relevant transactions for user's addresses
-- **Withdrawal flow**: Send funds from deposit address (requires private key management)
-
-### Key features
-- After signup/login, show the user's on-chain deposit address
-- Poll `GET /api/getAddress` and `GET /api/balance` to show updated balances
-- When user sends funds to deposit address, indexer detects it and updates Mongo; FE reflects changes within a block or two
-- For withdrawals, extend BE with proper auth, signing policies, and on-chain send flows
-
----
-
-
-## Roadmap (short)
-- Add `GET /api/balance` and `/api/txs` for the FE
-- Rename `bloclService.ts` → `blockService.ts` for consistency
-- Add input validation, rate limiting, and structured logging
-- Implement secure private key management for withdrawals
-
-
